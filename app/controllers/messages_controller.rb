@@ -1,5 +1,5 @@
 class MessagesController < ApplicationController
-  def show
+  def abholen
     @user = User.find_by(login: params[:login])
     render json: @user.messages
   end
