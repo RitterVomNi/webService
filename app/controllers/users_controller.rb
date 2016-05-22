@@ -17,7 +17,7 @@ class UsersController < ApplicationController
     if @user.nil?
       render nothing: true , status: 404
     else
-      render json: @user.to_json(only: %w(login pubkey_user))
+      render json: @user.to_json(only: %w(pubkey_user))
     end
   end
 
