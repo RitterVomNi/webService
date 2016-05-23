@@ -15,7 +15,7 @@ class MessagesController < ApplicationController
 
   def create
 
-    # Generate pubkey from DB
+    # Generate pubkey_user from DB
     pub_key_sender = User.find_by(login: params[:sender]).pubkey_user
     pubkey_user = OpenSSL::PKey::RSA.new(pub_key_sender)
 
@@ -25,7 +25,7 @@ class MessagesController < ApplicationController
     begin
       pubkey_user.public_decrypt(Base64.decode64(params[:sig_service]))
       check = true
-      rescue =>e
+      rescue
     end
     check2 = false
     if Time.now.to_i - params[:timestamp].to_i < 300
@@ -40,7 +40,7 @@ class MessagesController < ApplicationController
                       sig_service: params[:sig_service])
 
     if msg.save
-      render nothing: true , status: 200
+      render nothing: true , status: 201
     else
       render nothing: true , status: 404
     end

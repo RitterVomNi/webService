@@ -12,7 +12,8 @@ Rails.application.routes.draw do
     scope '/message' do
       get '/' => 'messages#abholen'
       post '/' => 'messages#create'
-      delete '/' => 'messages#destroy'
+      delete '/' => 'messages#destroy_all'
+      delete '/:id' => 'message#destroy_single'
     end
   end
 
