@@ -1,6 +1,5 @@
 Rails.application.routes.draw do
-  resources :messages
-  resources :users
+
 
   scope '/:login' do
     get '/' => 'users#anmelden'
@@ -10,9 +9,13 @@ Rails.application.routes.draw do
       get '/' => 'users#pubkey'
     end
     scope '/message' do
-      get '/' => 'messages#abholen'
+      get '/' => 'messages#letzte_abholen'
       post '/' => 'messages#create'
-      delete '/' => 'messages#destroy'
+      delete '/:id' => 'messages#destroy_single'
+    end
+    scope '/messages' do
+      get '/' => 'messages#alle_abholen'
+      delete '/' => 'messages#destroy_all'
     end
   end
 

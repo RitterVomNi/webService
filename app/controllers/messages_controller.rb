@@ -1,44 +1,56 @@
 class MessagesController < ApplicationController
-  def abholen
 
-    iu = OpenSSL::Digest::SHA256.new
-    iu << params[:timestamp].to_s
-    iu << params[:login]
-    dig_sig = iu.digest
+  def letzte_abholen
 
-    # Failsafe Default - return 404, falls die digitale Signatur des request inkorrekt
-   return head 404 unless params[:digitale_signatur] == Base64.encode64(dig_sig)
+    # Überprüfen der Signatur an das Model message.rb deligiert => DRY
+    # Gibt die letzte Nachricht im JSON Format an den Client zurück
+    render json: Message.sha256_gen(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages.last.to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
+  end
 
-    @user = User.find_by(login: params[:login])
-    render json: @user.messages.last.to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient))
+  def alle_abholen
+
+    # Überprüfen der Signatur an das Model message.rb deligiert => DRY
+    # Gibt alle Nachrichten, beginnend mit der neuesten, im JSON Format an den Client zurück
+    render json: Message.sha256_gen(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages.order('created_at desc').to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
+
   end
 
   def create
 
-    # Generate pubkey from DB
+    # Generiert pubkey aus DB
     pub_key_sender = User.find_by(login: params[:sender]).pubkey_user
     pubkey_user = OpenSSL::PKey::RSA.new(pub_key_sender)
 
 
     # Failsafe Default - return 404 wenn nicht richtiger pubkey zum entschlüsseln von sig_service und erlaubter timestamp
     check = false
+    check2 = false
+
     begin
+
+      # Wenn sig_service mit dem public key entschlüsselt werden kann, dann ist der erste check erfolgreich
       pubkey_user.public_decrypt(Base64.decode64(params[:sig_service]))
       check = true
-      rescue =>e
+      # Exception abfangen falls pubkey nicht zu sig_service passt
+    rescue =>e
+
     end
-    check2 = false
-    if Time.now.to_i - params[:timestamp].to_i < 300
+
+    # Wenn aktueller timestamp und gesendeter timestamp weniger als 5 Minuten auseinander liegen, dann ist der zweite check erfolgreich
+    if Time.zone.now.to_i - params[:timestamp].to_i < 300
       check2 = true
     end
+
     return head 404 unless check and check2
 
     recipient = User.find_by(login: params[:recipient]).id
 
+    # Erstellen der Nachricht
     msg = Message.new(recipient: recipient, content_enc: params[:content_enc], sender: params[:sender],
                       iv: params[:iv], key_recipient_enc: params[:key_recipient_enc], sig_recipient: params[:sig_recipient],
                       sig_service: params[:sig_service])
 
+    # Persistieren der Nachricht in der DB
     if msg.save
       render nothing: true , status: 200
     else
@@ -46,4 +58,24 @@ class MessagesController < ApplicationController
     end
 
   end
+
+  # Einzelne Nachricht finden und löschen
+  def destroy_single
+
+    Message.sha256_gen(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+    message = Message.find_by(id: params[:id])
+    message.destroy
+
+    render nothing: true ,  status: 200
+  end
+
+  # Alle Nachrichten eines Users finden und löschen
+  def destroy_all
+
+    messages = Message.sha256_gen(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages
+    messages.destroy_all
+
+    render nothing: true ,  status: 200
+  end
+
 end
