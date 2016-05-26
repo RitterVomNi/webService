@@ -17,7 +17,8 @@ class MessagesController < ApplicationController
 
   def create
 
-    # Generiert pubkey aus DB
+
+    # Generate pubkey_user from DB
     pub_key_sender = User.find_by(login: params[:sender]).pubkey_user
     pubkey_user = OpenSSL::PKey::RSA.new(pub_key_sender)
 
@@ -32,8 +33,7 @@ class MessagesController < ApplicationController
       pubkey_user.public_decrypt(Base64.decode64(params[:sig_service]))
       check = true
       # Exception abfangen falls pubkey nicht zu sig_service passt
-    rescue =>e
-
+    rescue
     end
 
     # Wenn aktueller timestamp und gesendeter timestamp weniger als 5 Minuten auseinander liegen, dann ist der zweite check erfolgreich
@@ -52,7 +52,7 @@ class MessagesController < ApplicationController
 
     # Persistieren der Nachricht in der DB
     if msg.save
-      render nothing: true , status: 200
+      render nothing: true , status: 201
     else
       render nothing: true , status: 404
     end
