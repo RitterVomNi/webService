@@ -2,11 +2,11 @@ class UsersController < ApplicationController
 
   def anmelden
     @user = User.find_by(login: params[:login])
-    if @user.nil?
-      head 400
-    else
-      render json: @user.to_json(only: %w(salt_masterkey privkey_user_enc pubkey_user))
-    end
+
+    head 400 unless @user != nil
+    
+    render json: @user.to_json(only: %w(salt_masterkey privkey_user_enc pubkey_user))
+
   end
 
   def pubkey
