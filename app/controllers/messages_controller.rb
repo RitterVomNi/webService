@@ -4,14 +4,14 @@ class MessagesController < ApplicationController
 
     # Überprüfen der Signatur an das Model message.rb deligiert => DRY
     # Gibt die letzte Nachricht im JSON Format an den Client zurück
-    render json: Message.sha256_gen(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages.last.to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
+    render json: Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages.last.to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
   end
 
   def alle_abholen
 
     # Überprüfen der Signatur an das Model message.rb deligiert => DRY
     # Gibt alle Nachrichten, beginnend mit der neuesten, im JSON Format an den Client zurück
-    render json: Message.sha256_gen(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages.order('created_at desc').to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
+    render json: Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages.order('created_at desc').to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
 
   end
 
@@ -62,7 +62,7 @@ class MessagesController < ApplicationController
   # Einzelne Nachricht finden und löschen
   def destroy_single
 
-    Message.sha256_gen(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+    Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
     message = Message.find_by(id: params[:id])
     message.destroy
 
@@ -72,7 +72,7 @@ class MessagesController < ApplicationController
   # Alle Nachrichten eines Users finden und löschen
   def destroy_all
 
-    messages = Message.sha256_gen(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages
+    messages = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages
     messages.destroy_all
 
     render nothing: true ,  status: 200

@@ -3,18 +3,31 @@ class Message < ActiveRecord::Base
   belongs_to :user
 
   # Bildet eine digitale Signatur über login und timestamp und vergleicht diese mit der vom Client übergebenen Signatur
-  def self.sha256_gen(timestamp, login, digitale_signatur)
+  def self.check_sig(timestamp, login, digitale_signatur)
 
-    iu = OpenSSL::Digest.new('sha256')
-    iu << timestamp
-    iu << login
-    dig_sig = iu.digest
+    user = User.find_by(login: login)
+    pubkey = user.pubkey_user
 
-    # Failsafe Default - return 404, falls die digitale Signatur des request inkorrekt
-    return head 404 unless digitale_signatur == Base64.encode64(dig_sig)
+
+    pubkey_user = OpenSSL::PKey::RSA.new(pubkey)
+
+    check = false
+    check2 = false
+    begin
+      pubkey_user.public_decrypt(Base64.decode64(digitale_signatur))
+      check = true
+    rescue
+    end
+
+    if Time.zone.now.to_i - timestamp.to_i < 300
+      check2 = true
+    end
+
+    return head 404 unless check and check2
+
 
     # Model gibt den User an den Controller zurück
-    return @user = User.find_by(login: login )
+    return user
   end
 
 end

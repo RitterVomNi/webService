@@ -22,7 +22,7 @@ class UsersController < ApplicationController
     @user = User.new(login: params[:login], salt_masterkey: params[:salt_masterkey], pubkey_user: params[:pubkey_user], privkey_user_enc: params[:privkey_user_enc])
 
       if @user.save
-        render nothing: true , status: 200
+        render nothing: true , status: 201
       else
         render nothing: true , status: 400
       end
