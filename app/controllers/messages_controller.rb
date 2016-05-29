@@ -30,7 +30,7 @@ class MessagesController < ApplicationController
 
   def create
 
-
+    begin
     # Generate pubkey_user from DB
     pub_key_sender = User.find_by(login: params[:sender]).pubkey_user
     pubkey_user = OpenSSL::PKey::RSA.new(pub_key_sender)
@@ -40,19 +40,21 @@ class MessagesController < ApplicationController
     check = false
     check2 = false
 
-    begin
 
       # Wenn sig_service mit dem public key entschlüsselt werden kann, dann ist der erste check erfolgreich
       pubkey_user.public_decrypt(Base64.decode64(params[:sig_service]))
       check = true
-      # Exception abfangen falls pubkey nicht zu sig_service passt
-    rescue
-    end
+
 
     # Wenn aktueller timestamp und gesendeter timestamp weniger als 5 Minuten auseinander liegen, dann ist der zweite check erfolgreich
     if Time.zone.now.to_i - params[:timestamp].to_i < 300
       check2 = true
     end
+
+    rescue
+    end
+
+
 
     return head 404 unless check and check2
 
