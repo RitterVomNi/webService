@@ -3,25 +3,29 @@ class MessagesController < ApplicationController
   def letzte_abholen
 
     # Überprüfen der Signatur an das Model message.rb deligiert => DRY
-    # Gibt die letzte Nachricht im JSON Format an den Client zurück
-
     user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
 
     if user == ""
       head 404
     else
+      # Gibt die letzte Nachricht im JSON Format an den Client zurück
       render json: user.messages.last.to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
     end
 
-    
+
   end
 
   def alle_abholen
 
     # Überprüfen der Signatur an das Model message.rb deligiert => DRY
-    # Gibt alle Nachrichten, beginnend mit der neuesten, im JSON Format an den Client zurück
-    render json: Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages.order('created_at desc').to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
+    user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
 
+    if user == ""
+      head 404
+    else
+    # Gibt alle Nachrichten, beginnend mit der neuesten, im JSON Format an den Client zurück
+    render json: user.messages.order('created_at desc').to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
+    end
   end
 
   def create
@@ -71,20 +75,31 @@ class MessagesController < ApplicationController
   # Einzelne Nachricht finden und löschen
   def destroy_single
 
-    Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+    user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+
+    if user == ""
+      head 404
+    else
     message = Message.find_by(id: params[:id])
     message.destroy
 
     render nothing: true ,  status: 200
+      end
   end
 
   # Alle Nachrichten eines Users finden und löschen
   def destroy_all
 
-    messages = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages
+    user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+
+    if user == ""
+      head 404
+    else
+    messages = user.messages
     messages.destroy_all
 
     render nothing: true ,  status: 200
+      end
   end
 
 end

@@ -2,7 +2,7 @@ class Message < ActiveRecord::Base
   #1:n Beziehung mit User
   belongs_to :user
 
-  # Bildet eine digitale Signatur über login und timestamp und vergleicht diese mit der vom Client übergebenen Signatur
+  # Überprüft die digitale Signatur mit dem pubkey des Senders
   def self.check_sig(timestamp, login, digitale_signatur)
 
     user = User.find_by(login: login)
