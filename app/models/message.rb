@@ -23,7 +23,7 @@ class Message < ActiveRecord::Base
       check2 = true
     end
 
-    return head 404 unless check and check2
+    return "" unless check and check2
 
 
     # Model gibt den User an den Controller zurück

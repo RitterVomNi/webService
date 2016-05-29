@@ -4,7 +4,16 @@ class MessagesController < ApplicationController
 
     # Überprüfen der Signatur an das Model message.rb deligiert => DRY
     # Gibt die letzte Nachricht im JSON Format an den Client zurück
-    render json: Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur]).messages.last.to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
+
+    user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+
+    if user == ""
+      head 404
+    else
+      render json: user.messages.last.to_json(only: %w(sender content_enc iv key_recipient_enc sig_recipient id created_at))
+    end
+
+    
   end
 
   def alle_abholen
