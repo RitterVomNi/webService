@@ -33,7 +33,7 @@ class UsersController < ApplicationController
 
   def destroy
 
-    user = User.check_sig(params[:timestamp], params[:login], params[:digitale_signatur])
+    user = User.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
 
     user.destroy
 
