@@ -1,6 +1,13 @@
 class Message < ActiveRecord::Base
   #1:n Beziehung mit User
   belongs_to :user
+  validates :sender, presence: true
+  validates :content_enc, presence: true
+  validates :iv, presence: true
+  validates :key_recipient_enc, presence: true
+  validates :sig_recipient, presence: true
+  validates :sig_service, presence: true
+  validates :recipient, presence: true
 
   # Überprüft die digitale Signatur mit dem pubkey des Senders
   def self.check_sig(timestamp, login, digitale_signatur)
