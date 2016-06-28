@@ -55,8 +55,8 @@ class MessagesController < ApplicationController
     end
 
 
-
-    return head 404 unless check and check2
+    return head 400 unless check
+    return head 404 unless check2
 
     recipient = User.find_by(login: params[:recipient]).id
 
