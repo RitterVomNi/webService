@@ -10,7 +10,7 @@ class Message < ActiveRecord::Base
   validates :recipient, presence: true
 
   # Überprüft die digitale Signatur mit dem pubkey des Senders
-  def self.check_sig(timestamp, login, digitale_signatur)
+  def self.check_sig(timestamp, login,  sig, digitale_signatur)
 
     user = User.find_by(login: login)
     pubkey = user.pubkey_user
@@ -21,8 +21,10 @@ class Message < ActiveRecord::Base
     check = false
     check2 = false
     begin
-      pubkey_user.public_decrypt(Base64.decode64(digitale_signatur))
-      check = true
+
+      digest = OpenSSL::Digest::SHA256.new
+      check = pubkey_user.verify(digest, Base64.decode64(digitale_signatur), sig)
+
     rescue
     end
 

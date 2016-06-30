@@ -2,8 +2,10 @@ class MessagesController < ApplicationController
 
   def letzte_abholen
 
+
+    sig = params[:timestamp]+params[:login]
     # Überprüfen der Signatur an das Model message.rb deligiert => DRY
-    user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+    user = Message.check_sig(params[:timestamp], params[:login], sig, params[:digitale_signatur])
 
     if user == ""
       head 404
@@ -17,8 +19,9 @@ class MessagesController < ApplicationController
 
   def alle_abholen
 
+    sig = params[:timestamp]+params[:login]
     # Überprüfen der Signatur an das Model message.rb deligiert => DRY
-    user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+    user = Message.check_sig(params[:timestamp].to_s, params[:login], sig,  params[:digitale_signatur])
 
     if user == ""
       head 404
@@ -35,25 +38,25 @@ class MessagesController < ApplicationController
     pub_key_sender = User.find_by(login: params[:sender]).pubkey_user
     pubkey_user = OpenSSL::PKey::RSA.new(pub_key_sender)
 
-
+    sig = params[:sender]+params[:content_enc]+params[:iv]+params[:key_recipient_enc]+params[:sig_recipient]+params[:timestamp]+params[:recipient]
     # Failsafe Default - return 404 wenn nicht richtiger pubkey zum entschlüsseln von sig_service und erlaubter timestamp
     check = false
     check2 = false
 
+    digest = OpenSSL::Digest::SHA256.new
+    check = pubkey_user.verify(digest, Base64.decode64(params[:sig_service]), sig)
 
       # Wenn sig_service mit dem public key entschlüsselt werden kann, dann ist der erste check erfolgreich
-      pubkey_user.public_decrypt(Base64.decode64(params[:sig_service]))
-      check = true
+     # pubkey_user.public_decrypt(Base64.decode64(params[:sig_service]))
+     # check = true
 
 
     # Wenn aktueller timestamp und gesendeter timestamp weniger als 5 Minuten auseinander liegen, dann ist der zweite check erfolgreich
     if Time.zone.now.to_i - params[:timestamp].to_i < 300
       check2 = true
     end
-
     rescue
     end
-
 
     return head 400 unless check
     return head 404 unless check2
@@ -77,7 +80,8 @@ class MessagesController < ApplicationController
   # Einzelne Nachricht finden und löschen
   def destroy_single
 
-    user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+    sig = params[:timestamp]+params[:login]
+    user = Message.check_sig(params[:timestamp], params[:login], sig, params[:digitale_signatur])
 
     if user == ""
       head 404
@@ -92,7 +96,8 @@ class MessagesController < ApplicationController
   # Alle Nachrichten eines Users finden und löschen
   def destroy_all
 
-    user = Message.check_sig(params[:timestamp].to_s, params[:login], params[:digitale_signatur])
+    sig = params[:timestamp]+params[:login]
+    user = Message.check_sig(params[:timestamp], params[:login], sig, params[:digitale_signatur])
 
     if user == ""
       head 404
