@@ -69,7 +69,7 @@ class MessagesController < ApplicationController
     if msg.save
       render nothing: true , status: 201
     else
-      render nothing: true , status: 404
+      render nothing: true , status: 405
     end
 
   end
